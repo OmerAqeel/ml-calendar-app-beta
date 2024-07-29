@@ -10,24 +10,36 @@ app.use(express.json());
 
 app.use(express.static('public'));
 
-app.post('/api/process-text', (req, res) => {
+app.post('/api/process-text', async (req, res) => {
   const { text } = req.body;
 
   console.log(`Processing text: ${text}`);
 
-  // Create a Python subprocess
-  const pythonProcess = spawn('python', ['script.py', text]);
-  pythonProcess.stdout.on('data', (data) => {
-    // Handle the output from the Python script
-    console.log(`Python script output:\n${data}`);
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000'); // Add this header
-    res.send(data.toString()); // Send the output back to the frontend
-  });
+  try {
+    // Set header
+    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
 
-  pythonProcess.stderr.on('data', (data) => {
-    console.error(`Python script error:\n${data}`);
+    // Create a Python subprocess
+    const pythonProcess = spawn('python3', ['script.py', text]);
+
+    const data = await new Promise((resolve, reject) => {
+      pythonProcess.stdout.on('data', (data) => {
+        resolve(data.toString());
+        // printing the result from the python script
+        console.log(`Python script result: ${data}`);
+      });
+      pythonProcess.stderr.on('data', (data) => {
+        reject(new   
+ Error(`Python script error: ${data}`));
+      });
+    });
+
+    // Send data only after successfully receiving it
+    res.send(data);
+  } catch (error) {
+    console.error(error);
     res.status(500).send('Error processing text');
-  });
+  }
 });
 
 app.listen(4000, () => {
