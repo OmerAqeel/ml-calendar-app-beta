@@ -83,4 +83,4 @@ if __name__ == "__main__":
         result = extract_features(text, deadlines)
         print(result)  # For debugging purposes
     else:
-        print("Error: No text or deadlines provided")
+        print("Error: No text or deadlines provided") 
